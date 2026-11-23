@@ -5,10 +5,12 @@
 #include "CurrentSource.hpp"
 #include "Resistor.hpp"
 
-class CurrentDivider : public Network
-{
+class CurrentDivider : public Network {
+
 private:
-  // TODO: little to no here, only add private ones when necessary
+
+void check_resistor_idx(int idx) const; // throws out of range error
+void update_node_voltage(); // recalculates the node 1 voltage
 
 public:
   CurrentDivider(double c, double res[], int num_res);
