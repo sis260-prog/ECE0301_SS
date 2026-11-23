@@ -257,3 +257,34 @@ TEST_CASE("Network: Test CurrentDivider", "[network]"){
   REQUIRE_THROWS_AS(div.set_resistance(num, 100), std::out_of_range);
   REQUIRE_THROWS_AS(div.set_resistance(0, -1), std::invalid_argument);
 }
+
+TEST_CASE("Network: Test PracticalVsCircuit", "[network]") {
+  // VS = 12 V, RS = 1k, RL = 2k, so 4 V drops across RS
+  PracticalVsCircuit pv(12, 1000, 2000);
+  REQUIRE(compare_double(pv.get_source_voltage(), 8));
+  REQUIRE(compare_double(pv.get_load_power(), 0.032));
+  pv.set_load(3000);
+  REQUIRE(compare_double(pv.get_source_voltage(), 9));
+  REQUIRE(compare_double(pv.get_load_power(), 0.027));
+  REQUIRE(pv.maximum_power_transfer(2000) == false);
+  REQUIRE(pv.maximum_power_transfer(1000) == true);
+  REQUIRE_THROWS_AS(PracticalVsCircuit(12, -1000, 2000), std::invalid_argument);
+  REQUIRE_THROWS_AS(pv.set_load(-1), std::invalid_argument);
+  REQUIRE_THROWS_AS(pv.maximum_power_transfer(-1), std::invalid_argument);
+
+  // dynamic & static binding
+  VoltageDivider *ptr = new PracticalVsCircuit(12, 1000, 2000);
+  REQUIRE(compare_double(ptr->get_source_voltage(), 8));
+  REQUIRE(compare_double(ptr->VoltageDivider::get_source_voltage(), 12));
+  Network *net = new PracticalVsCircuit(12, 1000, 2000);
+  REQUIRE(compare_double(net->get_node_voltage(2), 8));
+  delete ptr;
+  delete net;
+
+  // reference & pointer
+  Resistor r(100);
+  Component &ref = r;
+  Component *Cptr = &r;
+  REQUIRE_THROWS_AS(ref.set_value(-1), std::invalid_argument);
+  REQUIRE_THROWS_AS(Cptr->set_value(-1), std::invalid_argument);
+}

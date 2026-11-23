@@ -1,3 +1,5 @@
+// I had AI assistance writing some of the function definiions and test cases
+
 #include "CurrentDivider.hpp"
 #include <stdexcept>
 
