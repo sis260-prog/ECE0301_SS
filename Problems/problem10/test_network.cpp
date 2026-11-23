@@ -199,22 +199,63 @@ TEST_CASE("Network: Test overriding and dynamic binding", "[network]")
 
 // Uncomment these partial test cases when you are ready to test the dividers.
 
-// TEST_CASE("Network: Test VoltageDivider", "[network]")
-// {
-//   double voltage = 5.0;
-//   const int num = 2;
-//   double res[num] = {200, 400};
-//   VoltageDivider div(voltage, res, num);
+TEST_CASE("Network: Test VoltageDivider", "[network]")
+{
+  double voltage = 5.0;
+  const int num = 2;
+  double res[num] = {200, 400};
+  VoltageDivider div(voltage, res, num);
 
-//   // TODO
-// }
+  // TODO
+  REQUIRE(div.get_num_resistors() == num);
+  REQUIRE(compare_double(div.get_source_voltage(), voltage));
+  REQUIRE(compare_double(div.get_resistance(0), 200));
+  REQUIRE(compare_double(div.get_resistor_voltage(0), voltage * 200 / 600));
+  REQUIRE(compare_double(div.get_resistor_voltage(1), voltage * 400 / 600));
+  REQUIRE(compare_double(div.get_loop_current(), voltage / 600));
 
-// TEST_CASE("Network: Test CurrentDivider", "[network]")
-// {
-//   double current = 0.006;
-//   const int num = 2;
-//   double res[num] = {15000, 75000};
-//   CurrentDivider div(current, res, num);
+  // 12 V, then 200 + 1000 ohm
+  div.set_source_voltage(12);
+  REQUIRE(compare_double(div.get_resistor_voltage(1), 8));
+  div.set_resistance(1, 1000);
+  REQUIRE(compare_double(div.get_resistor_voltage(1), 10));
 
-//   // TODO
-// }
+  // exception throws
+  double bad[num] = {200, -400};
+  REQUIRE_THROWS_AS(VoltageDivider(voltage, res, 0), std::invalid_argument);
+  REQUIRE_THROWS_AS(VoltageDivider(voltage, bad, num), std::invalid_argument);
+  REQUIRE_THROWS_AS(div.get_resistance(-1), std::out_of_range);
+  REQUIRE_THROWS_AS(div.get_resistor_voltage(num), std::out_of_range);
+  REQUIRE_THROWS_AS(div.set_resistance(num, 100), std::out_of_range);
+  REQUIRE_THROWS_AS(div.set_resistance(0, -1), std::invalid_argument);
+}
+
+TEST_CASE("Network: Test CurrentDivider", "[network]")
+{
+  double current = 0.006;
+  const int num = 2;
+  double res[num] = {15000, 75000};
+  CurrentDivider div(current, res, num);
+
+  // TODO
+  // 15k || 75k = 12.5k, so 75 V across both
+  REQUIRE(div.get_num_resistors() == num);
+  REQUIRE(compare_double(div.get_source_current(), current));
+  REQUIRE(compare_double(div.get_resistance(0), 15000));
+  REQUIRE(compare_double(div.get_resistor_voltage(), 75));
+  REQUIRE(compare_double(div.get_resistor_current(0), 0.005));
+  REQUIRE(compare_double(div.get_resistor_current(1), 0.001));
+
+  // 12 mA, then 15k || 15k
+  div.set_source_current(0.012);
+  REQUIRE(compare_double(div.get_resistor_voltage(), 150));
+  div.set_resistance(1, 15000);
+  REQUIRE(compare_double(div.get_resistor_current(1), 0.006));
+
+  // exceptions throws
+  REQUIRE_THROWS_AS(CurrentDivider(current, res, 0), std::invalid_argument);
+  REQUIRE_THROWS_AS(div.get_resistance(-1), std::out_of_range);
+  REQUIRE_THROWS_AS(div.get_resistor_current(num), std::out_of_range);
+  REQUIRE_THROWS_AS(div.set_resistance(num, 100), std::out_of_range);
+  REQUIRE_THROWS_AS(div.set_resistance(0, -1), std::invalid_argument);
+}

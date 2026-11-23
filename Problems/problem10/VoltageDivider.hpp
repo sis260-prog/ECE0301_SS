@@ -8,8 +8,8 @@
 class VoltageDivider : public Network
 {
 private:
-  // TODO: little to no here, only add private ones when necessary
   void update_node_voltages(); // recalculates node voltage
+  void check_resistor_idx(int idx) const; // throws out of range error
 
 public:
   VoltageDivider(double v, double res[], int num_res);
